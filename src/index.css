@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* The scanline effect - CSS animation that mimics an old CRT monitor refresh */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline-overlay::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* A thin, semi-trnsparent green bar that sweeps down the screen on loop */
+  height: 4px;
+  background: rgba(0, 255, 65, 0.07);
+  animation: scanline 6s linear infinite;
+  pointer-events: none; /* So it never blocks clicks */
+  z-index: 9999;
+}
+
