@@ -56,8 +56,8 @@ function TerminalFrame({ children, savedSignals, onSelectDate, onErase }) {
         </aside>
 
         {/* Main card */}
-        <main className="flex-1 p-3 md:p-6">
-          <div className="md:rounded-lg md:p-6 p-3 max-w-3xl" style={{ backgroundColor: '#1a1d27', border: '1px solid transparent' }} >
+        <main className="flex-1 p-3 md:p-4">
+          <div className="md:rounded-lg md:p-6 p-3 w-full" style={{ backgroundColor: '#1a1d27', border: '1px solid #2e3248' }}>
             {children}
           </div>
         </main>
