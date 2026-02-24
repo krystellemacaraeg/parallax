@@ -1,7 +1,10 @@
-// This component has one job: look at what NASA sent and render the right media type
+import { useState } from 'react'
+
 function SignalDisplay({ apodData, onSave, isSaved }) {
 
-  // Need to make sure the data actually exists before I try to show it
+  // This single boolean is the whole flip mechanism - true means show raw JSON, false means show media
+  const [showRaw, setShowRaw] = useState(false)
+
   if (!apodData) return null
 
   const { title, url, hdurl, media_type, explanation, date, copyright } = apodData
@@ -9,10 +12,10 @@ function SignalDisplay({ apodData, onSave, isSaved }) {
   return (
     <div className="space-y-5">
 
-      {/* Status + metadata row */}
+      {/* Header row - metadata + action buttons */}
       <div>
         <p className="text-xs tracking-widest mb-3" style={{ color: '#4ade80' }}>
-          ✓ SIGNAL ACQUIRED - DECODING TRANSMISSION
+          ✓ SIGNAL ACQUIRED — DECODING TRANSMISSION
         </p>
 
         <h1 className="text-2xl leading-snug mb-3" style={{ color: '#e8eaf0' }}>
@@ -26,7 +29,6 @@ function SignalDisplay({ apodData, onSave, isSaved }) {
           <span className="text-xs" style={{ color: '#4a4f6a' }}>
             TYPE: <span style={{ color: '#7b9cff' }}>{media_type.toUpperCase()}</span>
           </span>
-          {/* Copyright doesn't always exist in the API response, so check first */}
           {copyright && (
             <span className="text-xs" style={{ color: '#4a4f6a' }}>
               © <span style={{ color: '#8b90a7' }}>{copyright.trim()}</span>
@@ -35,22 +37,97 @@ function SignalDisplay({ apodData, onSave, isSaved }) {
         </div>
       </div>
 
-      {/* Write-to-buffer button — disabled once the signal is already saved */}
-      <button
-        onClick={() => onSave(apodData)}
-        disabled={isSaved}
-        className="text-xs px-3 py-1.5 rounded tracking-widest transition-colors"
+      {/* Action buttons row - save + flip toggle sit side by side */}
+      <div className="flex items-center gap-3 flex-wrap">
+
+        {/* Write to buffer button */}
+        <button
+          onClick={() => onSave(apodData)}
+          disabled={isSaved}
+          className="text-xs px-3 py-1.5 rounded tracking-widest"
+          style={{
+            backgroundColor: isSaved ? '#1a1d27' : '#0f1117',
+            border: `1px solid ${isSaved ? '#4a4f6a' : '#7b9cff'}`,
+            color: isSaved ? '#4a4f6a' : '#7b9cff',
+            cursor: isSaved ? 'default' : 'pointer',
+          }}
+        >
+          {isSaved ? '✓ WRITTEN TO BUFFER' : '+ WRITE TO BUFFER'}
+        </button>
+
+        {/* The flip toggle - switches between decoded view and raw telemetry */}
+        <button
+          onClick={() => setShowRaw(prev => !prev)}
+          className="text-xs px-3 py-1.5 rounded tracking-widest"
+          style={{
+            backgroundColor: showRaw ? '#22263a' : '#0f1117',
+            border: `1px solid ${showRaw ? '#7b9cff' : '#2e3248'}`,
+            color: showRaw ? '#7b9cff' : '#8b90a7',
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = '#7b9cff'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = showRaw ? '#7b9cff' : '#2e3248'}
+        >
+          {showRaw ? '◈ DECODED VIEW' : '◇ RAW TELEMETRY'}
+        </button>
+
+      </div>
+
+      {/* The flip - either show the raw JSON dump or the normal media + explanation */}
+      {showRaw ? (
+        <RawTelemetry apodData={apodData} />
+      ) : (
+        <DecodedView
+          url={url}
+          hdurl={hdurl}
+          media_type={media_type}
+          title={title}
+          explanation={explanation}
+        />
+      )}
+
+    </div>
+  )
+}
+
+// --- RAW TELEMETRY VIEW ---
+// Renders the full JSON payload exactly as NASA sent it - like reading raw serial output
+function RawTelemetry({ apodData }) {
+  return (
+    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #2e3248' }}>
+
+      <div className="px-3 py-1.5 flex items-center gap-2"
+        style={{ backgroundColor: '#0f1117', borderBottom: '1px solid #2e3248' }}>
+        <span className="text-xs tracking-widest" style={{ color: '#4a4f6a' }}>
+          RAW JSON TELEMETRY — UNPROCESSED PAYLOAD
+        </span>
+      </div>
+
+      {/* pre tag preserves whitespace and line breaks - perfect for JSON display */}
+      {/* JSON.stringify with null, 2 formats it with 2-space indentation so it's readable */}
+      <pre
+        className="text-xs leading-6 p-4 overflow-auto"
         style={{
-          backgroundColor: isSaved ? '#1a1d27' : '#0f1117',
-          border: `1px solid ${isSaved ? '#4a4f6a' : '#7b9cff'}`,
-          color: isSaved ? '#4a4f6a' : '#7b9cff',
-          cursor: isSaved ? 'default' : 'pointer',
+          backgroundColor: '#0f1117',
+          color: '#7b9cff',
+          maxHeight: '420px',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
         }}
       >
-        {isSaved ? '✓ WRITTEN TO BUFFER' : '+ WRITE TO BUFFER'}
-      </button>
+        {JSON.stringify(apodData, null, 2)}
+      </pre>
 
-      {/* The decoder logic - switching to the video player if NASA didn't send an image today */}
+    </div>
+  )
+}
+
+// --- DECODED VIEW ---
+// The normal rendered view - media on top, explanation below
+function DecodedView({ url, hdurl, media_type, title, explanation }) {
+  return (
+    <div className="space-y-4">
+
+      {/* Switching to the video player if NASA didn't send an image today */}
       {media_type === 'image' && (
         <ImageDecoder url={url} hdurl={hdurl} title={title} />
       )}
@@ -59,16 +136,13 @@ function SignalDisplay({ apodData, onSave, isSaved }) {
         <VideoDecoder url={url} title={title} />
       )}
 
-      {/* Fallback for any unexpected media types NASA might send in the future */}
       {media_type !== 'image' && media_type !== 'video' && (
         <div className="rounded p-4 text-xs tracking-widest"
           style={{ border: '1px solid #2e3248', color: '#8b90a7' }}>
-          ⚠ UNKNOWN SIGNAL FORMAT: {media_type} - cannot decode
+          ⚠ UNKNOWN SIGNAL FORMAT: {media_type} — cannot decode
         </div>
       )}
 
-      {/* Capping the width at 65 characters per line — easier to read, less eye travel */}
-      {/* Fixed height box with internal scroll so it doesn't push everything down */}
       <div
         className="text-sm leading-7 overflow-y-auto pr-2"
         style={{
@@ -86,10 +160,8 @@ function SignalDisplay({ apodData, onSave, isSaved }) {
   )
 }
 
-// IMAGE DECODER
-// Renders the APOD photo. I'm using hdurl when available since it's the full resolution shot
+// --- IMAGE DECODER ---
 function ImageDecoder({ url, hdurl, title }) {
-  // hdurl isn't always present in the API response, so fall back to the standard url
   const imageSource = hdurl || url
 
   return (
@@ -98,10 +170,8 @@ function ImageDecoder({ url, hdurl, title }) {
         src={imageSource}
         alt={title}
         className="w-full object-cover"
-        // Telling the browser to load the image lazily - no point fetching it until it's visible
         loading="lazy"
       />
-      {/* Small label so I know which resolution I'm looking at */}
       <div className="px-3 py-1.5 text-xs" style={{ backgroundColor: '#0f1117', color: '#4a4f6a' }}>
         {hdurl ? 'HD TRANSMISSION RECEIVED' : 'STANDARD RESOLUTION SIGNAL'}
       </div>
@@ -109,27 +179,21 @@ function ImageDecoder({ url, hdurl, title }) {
   )
 }
 
-// VIDEO DECODER
-// NASA sometimes sends YouTube links - iframe is the cleanest way to embed these
+// --- VIDEO DECODER ---
 function VideoDecoder({ url, title }) {
   return (
     <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #2e3248' }}>
-      {/*
-        aspect-video is a Tailwind class that locks the iframe to a 16:9 ratio
-        w-full makes it stretch to fill the card - important for responsiveness
-      */}
       <div className="relative w-full aspect-video">
         <iframe
           src={url}
           title={title}
           className="absolute inset-0 w-full h-full"
-          // These allow attributes are required for YouTube embeds to work properly
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
       </div>
       <div className="px-3 py-1.5 text-xs" style={{ backgroundColor: '#0f1117', color: '#4a4f6a' }}>
-        VIDEO TRANSMISSION - EXTERNAL STREAM
+        VIDEO TRANSMISSION — EXTERNAL STREAM
       </div>
     </div>
   )
