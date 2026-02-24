@@ -1,5 +1,5 @@
 // This component has one job: look at what NASA sent and render the right media type
-function SignalDisplay({ apodData }) {
+function SignalDisplay({ apodData, onSave, isSaved }) {
 
   // Need to make sure the data actually exists before I try to show it
   if (!apodData) return null
@@ -34,6 +34,21 @@ function SignalDisplay({ apodData }) {
           )}
         </div>
       </div>
+
+      {/* Write-to-buffer button — disabled once the signal is already saved */}
+      <button
+        onClick={() => onSave(apodData)}
+        disabled={isSaved}
+        className="text-xs px-3 py-1.5 rounded tracking-widest transition-colors"
+        style={{
+          backgroundColor: isSaved ? '#1a1d27' : '#0f1117',
+          border: `1px solid ${isSaved ? '#4a4f6a' : '#7b9cff'}`,
+          color: isSaved ? '#4a4f6a' : '#7b9cff',
+          cursor: isSaved ? 'default' : 'pointer',
+        }}
+      >
+        {isSaved ? '✓ WRITTEN TO BUFFER' : '+ WRITE TO BUFFER'}
+      </button>
 
       {/* The decoder logic - switching to the video player if NASA didn't send an image today */}
       {media_type === 'image' && (

@@ -1,4 +1,6 @@
-function TerminalFrame({ children }) {
+import MemoryBuffer from './MemoryBuffer'
+
+function TerminalFrame({ children, savedSignals, onSelectDate, onErase }) {
   return (
     <div className="scanline-overlay min-h-screen font-mono" style={{ backgroundColor: '#0f1117', color: '#e8eaf0' }}>
 
@@ -42,6 +44,14 @@ function TerminalFrame({ children }) {
             <p className="text-xs leading-relaxed" style={{ color: '#4a4f6a' }}>
               Capturing daily transmissions from the NASA APOD satellite.
             </p>
+          </div>
+
+          <div style={{ borderTop: '1px solid #2e3248', paddingTop: '1rem' }}>
+            <MemoryBuffer
+              savedSignals={savedSignals}
+              onSelectDate={onSelectDate}
+              onErase={onErase}
+            />
           </div>
         </aside>
 

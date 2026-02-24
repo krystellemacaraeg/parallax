@@ -2,20 +2,19 @@ import { useState } from 'react'
 import TerminalFrame from './components/TerminalFrame'
 import SignalDisplay from './components/SignalDisplay'
 import DateTuner from './components/DateTuner'
+import MemoryBuffer from './components/MemoryBuffer'
 import useAPOD from './hooks/useAPOD'
+import useMemoryBuffer from './hooks/useMemoryBuffer'
 
 function App() {
-  // date lives here in App.jsx - it controls what useAPOD fetches
-  // Empty string means "fetch today", any YYYY-MM-DD string fetches that specific day
   const [date, setDate] = useState('')
-
-  // Passing date into the hook — it already watches for date changes via its [date] dependency
   const { apodData, loading, error } = useAPOD(date)
+  const { savedSignals, writeSignal, eraseSignal, isWritten } = useMemoryBuffer()
 
   return (
-    <TerminalFrame>
+    // Passing savedSignals and handlers down into TerminalFrame so the sidebar can render them
+    <TerminalFrame savedSignals={savedSignals} onSelectDate={setDate} onErase={eraseSignal}>
 
-      {/* DateTuner sits at the top of the card, above everything else */}
       <div className="mb-5 pb-4" style={{ borderBottom: '1px solid #2e3248' }}>
         <DateTuner date={date} onDateChange={setDate} />
       </div>
@@ -33,7 +32,11 @@ function App() {
       )}
 
       {apodData && !loading && (
-        <SignalDisplay apodData={apodData} />
+        <SignalDisplay
+          apodData={apodData}
+          onSave={writeSignal}
+          isSaved={isWritten(apodData.date)}
+        />
       )}
 
     </TerminalFrame>
