@@ -15,7 +15,7 @@ function SignalDisplay({ apodData, onSave, isSaved }) {
       {/* Header row - metadata + action buttons */}
       <div>
         <p className="text-xs tracking-widest mb-3" style={{ color: '#4ade80' }}>
-          ✓ SIGNAL ACQUIRED — DECODING TRANSMISSION
+          ✓ SIGNAL ACQUIRED - DECODING TRANSMISSION
         </p>
 
         <h1 className="text-2xl leading-snug mb-3" style={{ color: '#e8eaf0' }}>
@@ -98,7 +98,7 @@ function RawTelemetry({ apodData }) {
       <div className="px-3 py-1.5 flex items-center gap-2"
         style={{ backgroundColor: '#0f1117', borderBottom: '1px solid #2e3248' }}>
         <span className="text-xs tracking-widest" style={{ color: '#4a4f6a' }}>
-          RAW JSON TELEMETRY — UNPROCESSED PAYLOAD
+          RAW JSON TELEMETRY - UNPROCESSED PAYLOAD
         </span>
       </div>
 
@@ -127,28 +127,55 @@ function DecodedView({ url, hdurl, media_type, title, explanation }) {
   return (
     <div className="space-y-4">
 
-      {/* Switching to the video player if NASA didn't send an image today */}
       {media_type === 'image' && (
-        <ImageDecoder url={url} hdurl={hdurl} title={title} />
+        <ImageDecoder url={url} hdurl={hdurl} title={title} explanation={explanation} />
       )}
 
       {media_type === 'video' && (
-        <VideoDecoder url={url} title={title} />
+        <VideoDecoder url={url} title={title} explanation={explanation} />
       )}
 
       {media_type !== 'image' && media_type !== 'video' && (
         <div className="rounded p-4 text-xs tracking-widest"
           style={{ border: '1px solid #2e3248', color: '#8b90a7' }}>
-          ⚠ UNKNOWN SIGNAL FORMAT: {media_type} — cannot decode
+          ⚠ UNKNOWN SIGNAL FORMAT: {media_type} - cannot decode
         </div>
       )}
 
+    </div>
+  )
+}
+
+// --- IMAGE DECODER ---
+// On desktop: photo left, text right side by side
+// On mobile: photo on top, explanation scrolls below
+function ImageDecoder({ url, hdurl, title, explanation }) {
+  const imageSource = hdurl || url
+
+  return (
+    <div className="flex flex-col md:flex-row gap-4">
+
+      {/* Photo column - on desktop takes up half, on mobile full width */}
+      <div className="w-full md:w-1/2 rounded-lg overflow-hidden shrink-0"
+        style={{ border: '1px solid #2e3248' }}>
+        <img
+          src={imageSource}
+          alt={title}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        <div className="px-3 py-1.5 text-xs"
+          style={{ backgroundColor: '#0f1117', color: '#4a4f6a' }}>
+          {hdurl ? 'HD TRANSMISSION RECEIVED' : 'STANDARD RESOLUTION SIGNAL'}
+        </div>
+      </div>
+
+      {/* Text column - scrollable, fills the height of whatever the photo is */}
       <div
-        className="text-sm leading-7 overflow-y-auto pr-2"
+        className="text-sm leading-7 overflow-y-auto pr-2 md:w-1/2"
         style={{
           color: '#8b90a7',
-          maxWidth: '100%',
-          maxHeight: '180px',
+          maxHeight: '420px',
           scrollbarWidth: 'thin',
           scrollbarColor: '#2e3248 #0f1117',
         }}
@@ -160,41 +187,43 @@ function DecodedView({ url, hdurl, media_type, title, explanation }) {
   )
 }
 
-// --- IMAGE DECODER ---
-function ImageDecoder({ url, hdurl, title }) {
-  const imageSource = hdurl || url
-
-  return (
-    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #2e3248' }}>
-      <img
-        src={imageSource}
-        alt={title}
-        className="w-full object-cover"
-        loading="lazy"
-      />
-      <div className="px-3 py-1.5 text-xs" style={{ backgroundColor: '#0f1117', color: '#4a4f6a' }}>
-        {hdurl ? 'HD TRANSMISSION RECEIVED' : 'STANDARD RESOLUTION SIGNAL'}
-      </div>
-    </div>
-  )
-}
-
 // --- VIDEO DECODER ---
-function VideoDecoder({ url, title }) {
+// Same side-by-side layout as images - video left, explanation right on desktop
+function VideoDecoder({ url, title, explanation }) {
   return (
-    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #2e3248' }}>
-      <div className="relative w-full aspect-video">
-        <iframe
-          src={url}
-          title={title}
-          className="absolute inset-0 w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+    <div className="flex flex-col md:flex-row gap-4">
+
+      {/* Video column */}
+      <div className="w-full md:w-1/2 rounded-lg overflow-hidden shrink-0"
+        style={{ border: '1px solid #2e3248' }}>
+        <div className="relative w-full aspect-video">
+          <iframe
+            src={url}
+            title={title}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <div className="px-3 py-1.5 text-xs"
+          style={{ backgroundColor: '#0f1117', color: '#4a4f6a' }}>
+          VIDEO TRANSMISSION - EXTERNAL STREAM
+        </div>
       </div>
-      <div className="px-3 py-1.5 text-xs" style={{ backgroundColor: '#0f1117', color: '#4a4f6a' }}>
-        VIDEO TRANSMISSION — EXTERNAL STREAM
+
+      {/* Explanation column */}
+      <div
+        className="text-sm leading-7 overflow-y-auto pr-2 md:w-1/2"
+        style={{
+          color: '#8b90a7',
+          maxHeight: '420px',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#2e3248 #0f1117',
+        }}
+      >
+        {explanation}
       </div>
+
     </div>
   )
 }
