@@ -1,4 +1,5 @@
 import TerminalFrame from './components/TerminalFrame'
+import SignalDisplay from './components/SignalDisplay'
 import useAPOD from './hooks/useAPOD'
 
 function App() {
@@ -19,31 +20,9 @@ function App() {
         </div>
       )}
 
+      {/* Passing the whole apodData object down - SignalDisplay handles all the rendering logic */}
       {apodData && !loading && (
-        <div className="space-y-4">
-
-          <p className="text-xs tracking-widest" style={{ color: '#4ade80' }}>
-            ✓ SIGNAL ACQUIRED — DECODING TRANSMISSION
-          </p>
-
-          <h1 className="text-2xl leading-snug" style={{ color: '#e8eaf0' }}>
-            {apodData.title}
-          </h1>
-
-          <div className="flex gap-4 py-2" style={{ borderTop: '1px solid #2e3248', borderBottom: '1px solid #2e3248' }}>
-            <span className="text-xs" style={{ color: '#4a4f6a' }}>
-              DATE: <span style={{ color: '#8b90a7' }}>{apodData.date}</span>
-            </span>
-            <span className="text-xs" style={{ color: '#4a4f6a' }}>
-              TYPE: <span style={{ color: '#7b9cff' }}>{apodData.media_type.toUpperCase()}</span>
-            </span>
-          </div>
-
-          <p className="text-sm leading-7" style={{ color: '#8b90a7' }}>
-            {apodData.explanation}
-          </p>
-
-        </div>
+        <SignalDisplay apodData={apodData} />
       )}
 
     </TerminalFrame>
